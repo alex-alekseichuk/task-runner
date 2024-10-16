@@ -9,20 +9,7 @@ export class TaskRunner {
     constructor(protected taskFactory: TaskFactory, protected accuracyPeriod: number = 100) {
     }
 
-    onPeriod() {
-        const now = new Date().getTime()
-        const delta = now - this.timestamp
-        this.timestamp = now
-        const nTasks = Math.floor(this.perSecond * delta / 1000)
-        this.timestamp -= delta - Math.floor(nTasks * 1000 / this.perSecond)
-
-        for (let i = 0; i < nTasks; i++) {
-            const task = this.taskFactory.createTask()
-            task().then(() => null)
-        }
-    }
-
-    start(perSecond: number = 1): void {
+    public start(perSecond: number = 1): void {
         assert(1 <= perSecond && perSecond <= 3000)
         this.perSecond = perSecond
         if (!this.interval) {
@@ -31,10 +18,25 @@ export class TaskRunner {
         }
     }
 
-    stop(): void {
+    public stop(): void {
         if (this.interval) {
             clearInterval(this.interval)
             this.interval = undefined
+        }
+    }
+
+    protected onPeriod() {
+        const now = new Date().getTime()
+        const delta = now - this.timestamp
+        this.timestamp = now
+        const nTasks = Math.floor(this.perSecond * delta / 1000)
+        this.timestamp -= delta - Math.floor(nTasks * 1000 / this.perSecond)
+
+        for (let i = 0; i < nTasks; i++) {
+            const task = this.taskFactory.createTask()
+            task()
+                .then(() => null)
+                .catch(() => null)
         }
     }
 }
